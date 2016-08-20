@@ -44,12 +44,27 @@ class AddRepository extends Command
      */
     public function handle()
     {
+        $data = $this->getRepositoryDetails();
+
+        $tagData = $this->getRepositoryVersions($data);
+
+        $this->updateDatabase($data, $tagData);
+
+        $this->comment('Finished!');
+    }
+
+    /**
+     * @return array
+     */
+    private function getRepositoryDetails()
+    {
         $data = [
             'name' => $this->argument('name'),
             'icon' => $this->argument('icon'),
         ];
 
         // Get Details
+        $this->comment('Gathering details from github...');
         $details = $this->github->repositories()->show('nukacode', $data['name']);
 
         $data['description']   = $details['description'];
@@ -57,33 +72,78 @@ class AddRepository extends Command
         $data['git_url']       = $details['git_url'];
         $data['packagist_url'] = 'https://packagist.org/packages/nukacode/' . $data['name'];
 
-        // Get releases
-        $releases = $this->github->repositories()->releases()->all('nukacode', $data['name']);
+        return $data;
+    }
 
-        $releaseData = [];
+    /**
+     * @param $data
+     *
+     * @return array
+     */
+    private function getRepositoryVersions($data)
+    {
+        $tags = $this->github->repositories()->tags('nukacode', $data['name']);
+        $this->comment(count($tags) . ' tags found.  Searching for latest tags per minor version...');
 
-        foreach ($releases as $release) {
-            $semantics    = explode('.', $release['tag_name']);
-            $minorRelease = $semantics[0] . '.' . $semantics[1];
+        $tagData = [];
 
-            if (array_key_exists($minorRelease, $releaseData)) {
-                if ($semantics[2] > $releaseData[$minorRelease]['patch']) {
-                    $releaseData[$minorRelease]['latest_release'] = $release['tag_name'];
-                    $releaseData[$minorRelease]['patch']          = $semantics[2];
+        $bar = $this->output->createProgressBar(count($tags));
+
+        foreach ($tags as $tag) {
+            $docs = collect($this->github->repositories()->contents()->show('nukacode', $data['name'], null, $tag['commit']['sha']))
+                ->filter(function ($directory) {
+                    return $directory['path'] === 'docs';
+                })
+                ->first();
+
+            if (! is_null($docs)) {
+                $semantics    = explode('.', $tag['name']);
+                $minorRelease = $semantics[0] . '.' . $semantics[1];
+
+                if (array_key_exists($minorRelease, $tagData)) {
+                    if ($semantics[2] > $tagData[$minorRelease]['patch']) {
+                        $tagData[$minorRelease]['latest_release'] = $tag['name'];
+                        $tagData[$minorRelease]['patch']          = $semantics[2];
+                        $tagData[$minorRelease]['sha']            = $docs['sha'];
+                        $tagData[$minorRelease]['commit_hash']    = $tag['commit']['sha'];
+                    }
+                } else {
+                    $tagData[$minorRelease] = [
+                        'name'           => $minorRelease,
+                        'latest_release' => $tag['name'],
+                        'patch'          => $semantics[2],
+                        'sha'            => $docs['sha'],
+                        'commit_hash'    => $tag['commit']['sha'],
+                    ];
                 }
-            } else {
-                $releaseData[$minorRelease] = [
-                    'name'           => $minorRelease,
-                    'latest_release' => $release['tag_name'],
-                    'patch'          => $semantics[2],
-                ];
             }
+
+            $bar->advance();
         }
 
-        $repo = Repository::create($data);
+        $bar->finish();
 
-        collector($releaseData)->map(function ($release) use ($repo) {
-            $repo->versions()->create($release);
+        return $tagData;
+    }
+
+    /**
+     * @param $data
+     * @param $tagData
+     */
+    private function updateDatabase($data, $tagData)
+    {
+        $this->comment("\n" . 'Updating database...');
+
+        $repo = Repository::updateOrCreate(
+            array_only($data, 'name'),
+            $data
+        );
+
+        collector($tagData)->map(function ($tag) use ($repo) {
+            $repo->versions()->updateOrCreate(
+                array_only($tag, ['repository_id', 'name']),
+                $tag
+            );
         });
     }
 }

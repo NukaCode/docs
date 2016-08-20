@@ -10,11 +10,24 @@ class Version extends BaseModel
         'repository_id',
         'name',
         'latest_release',
+        'sha',
+        'commit_hash',
     ];
+
+    public function getPathAttribute()
+    {
+        return base_path('resources/docs/'
+                         . $this->repository->name . '/'
+                         . $this->name . '/docs');
+    }
 
     public function repository()
     {
-        return $this->belongsTo(Repository::class, 'id');
+        return $this->belongsTo(Repository::class, 'repository_id');
     }
 
+    public function chapters()
+    {
+        return $this->hasMany(Chapter::class, 'version_id');
+    }
 }

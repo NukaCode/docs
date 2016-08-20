@@ -17,6 +17,8 @@ class CreateVersionsTable extends Migration
             $table->integer('repository_id')->unsigned()->index();
             $table->string('name')->index();
             $table->string('latest_release')->index();
+            $table->string('sha', 40)->index();
+            $table->string('commit_hash')->index();
             $table->timeStamps();
 
             $table->foreign('repository_id')

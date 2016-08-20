@@ -14,7 +14,7 @@ class CreateRepositoriesTable extends Migration
     {
         Schema::create('repositories', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name');
+            $table->string('name')->index();
             $table->text('description')->nullable();
             $table->text('icon');
             $table->string('github_url');
