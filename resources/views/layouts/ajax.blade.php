@@ -8,6 +8,7 @@
 @endif
 
 {!! HTML::script('js/app.js') !!}
+{!! HTML::script('js/prism.js') !!}
 
 <!-- JS Include -->
 @section('jsInclude')
