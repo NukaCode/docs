@@ -17,12 +17,12 @@ class Repository extends BaseModel
 
     public function getLatestVersionAttribute()
     {
-        return $this->versions->orderBy('latest_release')->first()->name;
+        return $this->versions()->where('name', '!=', 'master')->orderBy('latest_release', 'desc')->first()->name;
     }
 
     public function getLatestReleaseAttribute()
     {
-        return $this->versions->orderBy('latest_release')->first()->latest_release;
+        return $this->versions->where('name', '!=', 'master')->orderBy('latest_release', 'desc')->first()->latest_release;
     }
 
     public function versions()

@@ -85,7 +85,22 @@ class AddRepository extends Command
         $tags = $this->github->repositories()->tags('nukacode', $data['name']);
         $this->comment(count($tags) . ' tags found.  Searching for latest tags per minor version...');
 
-        $tagData = [];
+        $commits = $this->github->repositories()->commits()->all('nukacode', $data['name'], array('sha' => 'master'));
+
+        $docs = collect($this->github->repositories()->contents()->show('nukacode', $data['name']))
+            ->filter(function ($directory) {
+                return $directory['path'] === 'docs';
+            })
+            ->first();
+
+        $tagData = [
+            'master' => [
+                'name'           => 'master',
+                'latest_release' => 'master',
+                'sha'            => $docs['sha'],
+                'commit_hash'    => head($commits)['sha'],
+            ]
+        ];
 
         $bar = $this->output->createProgressBar(count($tags));
 
