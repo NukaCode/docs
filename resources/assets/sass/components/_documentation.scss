@@ -1,0 +1,48 @@
+.documentation {
+  ul {
+    list-style: none;
+    &:nth-child(2) {
+      padding-left: 0;
+    }
+    li ul {
+      padding-left: 25px !important;
+    }
+
+    li:before {
+      font-family:  'FontAwesome';
+      content:      "\f121 ";
+      margin-right: .25em;
+      color:        $black;
+      opacity:      .3;
+    }
+  }
+  h2:before {
+    font-family:  'FontAwesome';
+    content:      "\f121 ";
+    margin-right: .25em;
+    color:        $black;
+    opacity:      .3;
+  }
+
+  table {
+    background-color: $table-bg;
+    text-align:       left;
+    width:            100%;
+    max-width:        100%;
+    margin-bottom:    $line-height-computed;
+    // Cells
+    > thead,
+    > tbody,
+    > tfoot {
+      > tr {
+        > th,
+        > td {
+          padding:        $table-cell-padding;
+          line-height:    $line-height-base;
+          vertical-align: top;
+          border-top:     1px solid $table-border-color;
+        }
+      }
+    }
+  }
+}

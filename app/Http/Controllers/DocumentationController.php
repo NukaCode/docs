@@ -47,21 +47,35 @@ class DocumentationController extends BaseController
 
     public function index($version, $name)
     {
-        $version = $this->repository->where('name', $name)->first()
-                                    ->versions()->with('chapters.sections')->where('name', $version)->first();
+        $version = $this->repository->byName($name)
+                                    ->first()
+                                    ->versions()
+                                    ->with('chapters')
+                                    ->byName($version)
+                                    ->first();
+        $section = Section::whereIn('chapter_id', $version->chapters->id->toArray())
+                          ->first();
 
-        $this->setViewData(compact('version'));
+        return redirect(route('docs.section', [$version->name, $name, $section->name]));
     }
 
     public function section($version, $name, $section)
     {
-        $version = $this->repository->where('name', $name)->first()
-                                    ->versions()->with('chapters.sections')->where('name', $version)->first();
+        $allVersions = $this->repository->byName($name)
+                                        ->first()
+                                        ->versions()
+                                        ->has('chapters')
+                                        ->with('chapters.sections')
+                                        ->get();
+        $versions    = $allVersions->name;
+        $version     = $allVersions->getWhereFirst('name', $version);
 
-        $section = Section::whereIn('chapter_id', $version->chapters->id->toArray())->where('name', $section)->first();
+        $section = Section::whereIn('chapter_id', $version->chapters->id->toArray())
+                          ->byName($section)
+                          ->first();
 
         $content = $this->markdown->text(file_get_contents($section->path));
 
-        $this->setViewData(compact('version', 'content'));
+        $this->setViewData(compact('version', 'versions', 'content', 'section'));
     }
 }

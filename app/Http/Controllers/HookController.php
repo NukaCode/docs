@@ -66,6 +66,7 @@ class HookController extends BaseController
                 Artisan::call('docs:add-repo', ['name' => $repository->name, 'icon' => $repository->icon]);
                 $this->addResults('Running get-docs');
                 Artisan::call('docs:get-docs', ['name' => $repository->name]);
+                Artisan::call('view:clear');
             } catch (\Exception $e) {
                 $this->addResults('Artisan commands failed.');
             }

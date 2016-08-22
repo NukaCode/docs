@@ -6,6 +6,11 @@ use NukaCode\Core\Models\BaseModel as CoreBaseModel;
 
 abstract class BaseModel extends CoreBaseModel
 {
+    public function scopeByName($query, $name)
+    {
+        return $query->where('name', $name);
+    }
+
     public function getCreatedAtAttribute()
     {
         return $this->getDate('created_at');
