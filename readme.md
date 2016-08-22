@@ -39,3 +39,31 @@ we mean that if version have the same sha for the docs dir, they all use the fir
 
 Next it goes through the files of each directory to populate the `chapters` and `sections` tables.  These are what are used 
 to display the content on the site since only versions that have chapters are selectable.
+
+## Set up your webhooks
+For any package that you want to be updated, you will need to add a webhook.  You can do this by going to your repository in 
+GitHub and clicking Settings, then "Webhooks & Services".  Click "Add webhook".  here you will set the "Payload URL" to whatever 
+URL this docs site is on then `/hook`.  So if you installed this repository on `http://docs.scout.com` the Payload URL would 
+be `http://docs.scout.com/hook`.  The content type should be "application/json" and the secret should be the same as what 
+you put in your .env for GITHUB_SECRET.
+
+The events you need are only `Push` and `Release`.  These are both side-by-side towards the bottom of the checkboxes.  Lastly 
+click "Add webhook" and you are done.
+
+Anytime a webhook is received it will check a few things.  First it checks that the signature matches your secret key.  This 
+ensures no one can do bad things with that route.  Next it checks to make sure the event type is one that we understand.  Currently 
+this is set to "push" and "release".  Then it will run the `php artisan docs:add-repo` and `php artisan docs:get-docs` commands 
+for the repository that triggered the event.  If that repository hasn't been added to the system yet, it will not run these.  
+Lastly it wraps up everything that was done and sends it to the logs as one lump log.  An example of the logs is included below.
+
+```
+[2016-08-22 06:29:50] local.INFO: Event Log:
+GitHub event received
+GitHub event signature matched
+Repository set to database
+Running add-repo
+Running get-docs
+GitHub event processed.  
+```
+
+If any errors were encountered it will display them and the log level would be error instead of info.
