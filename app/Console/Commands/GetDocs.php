@@ -96,7 +96,7 @@ class GetDocs extends Command
 
                 $versionGroup->each(function ($version) use ($chapters) {
                     $chapters->each(function ($chapter) use ($version) {
-                        $chapter = $version->chapters()->firstOrCreate($chapter);
+                        $chapter = $version->chapters()->updateOrCreate(['version_id' => $version->id, 'name' => $chapter['name']], $chapter);
 
                         $sections = collect($this->filesystem->files($chapter->path))
                             ->map(function ($section) use ($chapter) {
@@ -114,7 +114,7 @@ class GetDocs extends Command
                             })->filter();
 
                         $sections->each(function ($section) use ($chapter) {
-                            $chapter->sections()->firstOrCreate($section);
+                            $chapter->sections()->updateOrCreate(['chapter_id' => $chapter->id, 'name' => $section['name']], $section);
                         });
                     });
                 });
