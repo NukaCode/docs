@@ -28,11 +28,6 @@ class GetDocs extends Command
     private $sha = null;
 
     /**
-     * @var \GrahamCampbell\GitHub\GitHubManager
-     */
-    private $github;
-
-    /**
      * @var \App\Models\Repository
      */
     private $repository;
@@ -45,15 +40,13 @@ class GetDocs extends Command
     /**
      * Create a new command instance.
      *
-     * @param \GrahamCampbell\GitHub\GitHubManager $github
      * @param \App\Models\Repository               $repository
      * @param \Illuminate\Filesystem\Filesystem    $filesystem
      */
-    public function __construct(GitHubManager $github, Repository $repository, Filesystem $filesystem)
+    public function __construct(Repository $repository, Filesystem $filesystem)
     {
         parent::__construct();
 
-        $this->github     = $github;
         $this->repository = $repository;
         $this->filesystem = $filesystem;
     }

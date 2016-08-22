@@ -28,13 +28,19 @@ class AddRepository extends Command
     private $github;
 
     /**
+     * @var string
+     */
+    private $packageNamespace;
+
+    /**
      * Create a new command instance.
      */
     public function __construct(GitHubManager $github)
     {
         parent::__construct();
 
-        $this->github = $github;
+        $this->github           = $github;
+        $this->packageNamespace = env('PACKAGE_NAMESPACE');
     }
 
     /**
@@ -65,12 +71,12 @@ class AddRepository extends Command
 
         // Get Details
         $this->comment('Gathering details from github...');
-        $details = $this->github->repositories()->show('nukacode', $data['name']);
+        $details = $this->github->repositories()->show($this->packageNamespace, $data['name']);
 
         $data['description']   = $details['description'];
         $data['github_url']    = $details['html_url'];
         $data['git_url']       = $details['git_url'];
-        $data['packagist_url'] = 'https://packagist.org/packages/nukacode/' . $data['name'];
+        $data['packagist_url'] = 'https://packagist.org/packages'. $this->$this->packageNamespace .'/' . $data['name'];
 
         return $data;
     }
@@ -82,12 +88,12 @@ class AddRepository extends Command
      */
     private function getRepositoryVersions($data)
     {
-        $tags = $this->github->repositories()->tags('nukacode', $data['name']);
+        $tags = $this->github->repositories()->tags($this->packageNamespace, $data['name']);
         $this->comment(count($tags) . ' tags found.  Searching for latest tags per minor version...');
 
-        $commits = $this->github->repositories()->commits()->all('nukacode', $data['name'], array('sha' => 'master'));
+        $commits = $this->github->repositories()->commits()->all($this->packageNamespace, $data['name'], ['sha' => 'master']);
 
-        $docs = collect($this->github->repositories()->contents()->show('nukacode', $data['name']))
+        $docs = collect($this->github->repositories()->contents()->show($this->packageNamespace, $data['name']))
             ->filter(function ($directory) {
                 return $directory['path'] === 'docs';
             })
@@ -99,13 +105,13 @@ class AddRepository extends Command
                 'latest_release' => 'master',
                 'sha'            => $docs['sha'],
                 'commit_hash'    => head($commits)['sha'],
-            ]
+            ],
         ];
 
         $bar = $this->output->createProgressBar(count($tags));
 
         foreach ($tags as $tag) {
-            $docs = collect($this->github->repositories()->contents()->show('nukacode', $data['name'], null, $tag['commit']['sha']))
+            $docs = collect($this->github->repositories()->contents()->show($this->packageNamespace, $data['name'], null, $tag['commit']['sha']))
                 ->filter(function ($directory) {
                     return $directory['path'] === 'docs';
                 })
