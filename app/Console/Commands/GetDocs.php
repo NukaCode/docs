@@ -79,45 +79,47 @@ class GetDocs extends Command
             $versionGroup->each(function ($version) use ($versionGroup) {
                 $docsPath = $versionGroup->last()->path;
 
-                $chapters = collect($this->filesystem->directories($docsPath))
-                    ->map(function ($chapter) use ($docsPath) {
-                        preg_match_all('/([\d]+)\-([\w\s]+)/', str_replace($docsPath . '/', '', $chapter), $matches);
+                if (! $this->filesystem->exists($docsPath .'/MakeFile')) {
+                    $chapters = collect($this->filesystem->directories($docsPath))
+                        ->map(function ($chapter) use ($docsPath) {
+                            preg_match_all('/([\d]+)\-([\w\s]+)/', str_replace($docsPath . '/', '', $chapter), $matches);
 
-                        if (isset($matches[2][0])) {
-                            return [
-                                'name'   => $matches[2][0],
-                                'number' => (int)$matches[1][0],
-                                'path'   => $chapter,
-                            ];
-                        }
+                            if (isset($matches[2][0])) {
+                                return [
+                                    'name'   => $matches[2][0],
+                                    'number' => (int)$matches[1][0],
+                                    'path'   => $chapter,
+                                ];
+                            }
 
-                        return null;
-                    })->filter();
+                            return null;
+                        })->filter();
 
-                $versionGroup->each(function ($version) use ($chapters) {
-                    $chapters->each(function ($chapter) use ($version) {
-                        $chapter = $version->chapters()->updateOrCreate(['version_id' => $version->id, 'name' => $chapter['name']], $chapter);
+                    $versionGroup->each(function ($version) use ($chapters) {
+                        $chapters->each(function ($chapter) use ($version) {
+                            $chapter = $version->chapters()->updateOrCreate(['version_id' => $version->id, 'name' => $chapter['name']], $chapter);
 
-                        $sections = collect($this->filesystem->files($chapter->path))
-                            ->map(function ($section) use ($chapter) {
-                                preg_match_all('/([\d]+)\-([\w\s]+)/', str_replace($chapter->path . '/', '', $section), $matches);
+                            $sections = collect($this->filesystem->files($chapter->path))
+                                ->map(function ($section) use ($chapter) {
+                                    preg_match_all('/([\d]+)\-([\w\s]+)/', str_replace($chapter->path . '/', '', $section), $matches);
 
-                                if (isset($matches[2][0])) {
-                                    return [
-                                        'name'   => $matches[2][0],
-                                        'number' => (int)$matches[1][0],
-                                        'path'   => $section,
-                                    ];
-                                }
+                                    if (isset($matches[2][0])) {
+                                        return [
+                                            'name'   => $matches[2][0],
+                                            'number' => (int)$matches[1][0],
+                                            'path'   => $section,
+                                        ];
+                                    }
 
-                                return null;
-                            })->filter();
+                                    return null;
+                                })->filter();
 
-                        $sections->each(function ($section) use ($chapter) {
-                            $chapter->sections()->updateOrCreate(['chapter_id' => $chapter->id, 'name' => $section['name']], $section);
+                            $sections->each(function ($section) use ($chapter) {
+                                $chapter->sections()->updateOrCreate(['chapter_id' => $chapter->id, 'name' => $section['name']], $section);
+                            });
                         });
                     });
-                });
+                }
             });
         });
     }
