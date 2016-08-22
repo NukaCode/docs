@@ -1,27 +1,41 @@
-# Laravel PHP Framework
+# How to start
 
-[![Build Status](https://travis-ci.org/laravel/framework.svg)](https://travis-ci.org/laravel/framework)
-[![Total Downloads](https://poser.pugx.org/laravel/framework/d/total.svg)](https://packagist.org/packages/laravel/framework)
-[![Latest Stable Version](https://poser.pugx.org/laravel/framework/v/stable.svg)](https://packagist.org/packages/laravel/framework)
-[![Latest Unstable Version](https://poser.pugx.org/laravel/framework/v/unstable.svg)](https://packagist.org/packages/laravel/framework)
-[![License](https://poser.pugx.org/laravel/framework/license.svg)](https://packagist.org/packages/laravel/framework)
+## GitHub Token
+First you will need to get your github access token from [your settings page](https://github.com/settings/tokens).  Enable 
+everything (or at least the reads) and you should be fine.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable, creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as authentication, routing, sessions, queueing, and caching.
+## Generate a secret key
+You can do this however you want, but this key should be kept secret as it will be used for the github webhooks.
 
-Laravel is accessible, yet powerful, providing tools needed for large, robust applications. A superb inversion of control container, expressive migration system, and tightly integrated unit testing support give you the tools you need to build any application with which you are tasked.
+## Update the .env
+You will find a few new keys in the .env.example file.  You need to set 3 things:
 
-## Official Documentation
+1. Your GITHUB_TOKEN
+2. Your GITHUB_SECRET
+3. The namespace of your packages.  (eg: For Laravel\Scout the PACKAGE_NAMESPACE would be "laravel")
 
-Documentation for the framework can be found on the [Laravel website](http://laravel.com/docs).
+## Normal Steps
+This would be things like run `composer install`, `npm install`, `php artisan migrate`, etc.
 
-## Contributing
+## Add a repository
+Now that we know everything that's needed, you can add your site.  Run `php artisan docs:add-repo <name> <icon>`.  The 
+name would be the actual package itself.  In the previous example using Laravel\Scout, the name would be scout.  The icon 
+would be a font-awesome icon that will represent your package on the home page.  (Only the part after the fa- is needed).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](http://laravel.com/docs/contributions).
+`php artisan docs:add-repo scout binoculars`
 
-## Security Vulnerabilities
+This command will populate the `repositories` and `versions` tables with the details of this repository.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell at taylor@laravel.com. All security vulnerabilities will be promptly addressed.
+## Get the docs
+Next, run `php artisan docs:get-docs <name>` to get the documentation from the package.  You should make sure to have a 
+`docs` directory in the root of your package.
 
-## License
+`php artisan docs:get-docs scout`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
+This will create a folder in `resources/docs` called `scout` and then a directory per version with unique docs.  By this 
+we mean that if version have the same sha for the docs dir, they all use the first instance of them.  For example if releases 
+2.0 and 2.1 have the same sha for the docs dir, but 2.2 has a different sha, it would create `resources/docs/scout/2.0` and 
+`resources/docs/scout/2.2`.
+
+Next it goes through the files of each directory to populate the `chapters` and `sections` tables.  These are what are used 
+to display the content on the site since only versions that have chapters are selectable.
